@@ -137,12 +137,12 @@ suspend fun initiateTS43Auth(
     val url = TS43Config.TS43_AUTH_ENDPOINT
     
     // Get carrier information
-    val carrierHint = getCarrierHint() // Your implementation
+    val carrierHint = getCarrierHint() // optinal
     
     val requestBody = JSONObject().apply {
         put("client_id", clientId)
         put("login_hint", phoneNumber)
-        put("carrier_hint", carrierHint)
+        put("carrier_hint", carrierHint) // optional
         put("scope", scope) // "openid ip:phone_verify" or "openid ip:phone"
         put("operation", operation) // "VerifyPhoneNumber" or "GetPhoneNumber"
     }.toString()
