@@ -137,7 +137,7 @@ suspend fun initiateTS43Auth(
     val url = TS43Config.TS43_AUTH_ENDPOINT
     
     // Get carrier information
-    val carrierHint = getCarrierHint() // optinal
+    val carrierHint = getCarrierHint() // optional
     
     val requestBody = JSONObject().apply {
         put("client_id", clientId)
