@@ -201,38 +201,59 @@ fun extractDigitalRequest(ts43Response: TS43AuthResponse): String {
 ### Step 6: Request Credential via Credential Manager
 
 ```kotlin
-suspend fun requestCredential(
+import android.app.Activity
+import androidx.core.content.ContextCompat
+import androidx.credentials.CredentialManager
+import androidx.credentials.CredentialManagerCallback
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.provider.CallingAppInfo
+import androidx.credentials.GetDigitalCredentialOption
+import androidx.credentials.DigitalCredential
+import androidx.credentials.ExperimentalDigitalCredentialApi
+
+@OptIn(ExperimentalDigitalCredentialApi::class)
+fun requestCredential(
     activity: Activity,
-    digitalRequest: String
-): String {
-    return suspendCoroutine { continuation ->
-        val credentialManager = CredentialManager.create(activity)
-        val requestJson = """{"requests": [${digitalRequest}]}"""
-        // Create the digital credential option
-        val digitalCredentialOption = GetDigitalCredentialOption(requestJson)
-        
-        // Build the credential request
-        val getCredRequest = GetCredentialRequest.Builder()
-            .addCredentialOption(digitalCredentialOption)
-            .build()
-        
-        // Launch credential request
-        CoroutineScope(Dispatchers.Main).launch {
-            try {
-                val result = credentialManager.getCredential(
-                    request = getCredRequest,
-                    context = activity
-                )
-                
-                // Extract credential JSON
-                val credentialJson = result.credential.data.toString()
-                continuation.resume(credentialJson)
-            } catch (e: Exception) {
-                continuation.resumeWithException(e)
+    digitalRequest: String,
+    onSuccess: (String) -> Unit,
+    onError: (Exception) -> Unit
+) {
+    val credentialManager = CredentialManager.create(activity)
+    val requestJson = """{"requests": [$digitalRequest]}"""
+
+    val digitalCredentialOption = GetDigitalCredentialOption(
+        requestJson = requestJson
+    )
+
+    val getCredentialRequest = GetCredentialRequest(
+        listOf(digitalCredentialOption)
+    )
+
+    credentialManager.getCredentialAsync(
+        context = activity,
+        request = getCredentialRequest,
+        cancellationSignal = null,
+        executor = ContextCompat.getMainExecutor(activity),
+        callback = object : CredentialManagerCallback<GetCredentialResponse, GetCredentialException> {
+            override fun onResult(result: GetCredentialResponse) {
+                val credential = result.credential
+
+                if (credential is DigitalCredential) {
+                    onSuccess(credential.credentialJson)
+                } else {
+                    onError(IllegalStateException("Unexpected credential type: ${credential.type}"))
+                }
+            }
+
+            override fun onError(e: GetCredentialException) {
+                onError(e)
             }
         }
-    }
+    )
 }
+
 ```
 
 ### Step 7: Extract VP Token
