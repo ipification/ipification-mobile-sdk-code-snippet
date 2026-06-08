@@ -74,7 +74,7 @@ dependencies {
 ```
 
 ### Requirements
-- **Android SDK**: Minimum API 31 (Android 12.0)
+- **Android SDK**: Minimum API 29 (Android 10)
 - **Target SDK**: 33 or higher (recommended)
 - **Google Play Services**: Latest version installed on device
 
