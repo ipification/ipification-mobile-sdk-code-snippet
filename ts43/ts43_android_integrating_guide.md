@@ -59,14 +59,14 @@ Add these to your `app/build.gradle`:
 ```gradle
 dependencies {
     // Android Credential Manager
-    implementation 'androidx.credentials:credentials:1.6.0-beta01'
-    implementation 'androidx.credentials:credentials-play-services-auth:1.6.0-beta01'
+    implementation 'androidx.credentials:credentials:1.6.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.6.0'
     
     // Google Play Services
     implementation 'com.google.android.gms:play-services-auth:21.4.0'
     
     // Networking
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.okhttp3:okhttp:5.3.2'
     
     // Kotlin Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
