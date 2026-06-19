@@ -30,6 +30,7 @@
         <domain includeSubdomains="true">ideabiz.lk</domain>
 
         <!-- India -->
+        <domain includeSubdomains="true">airtel.in</domain>
         <domain includeSubdomains="true">jio.com</domain>
         <domain includeSubdomains="true">jiolabs.com</domain>
         
