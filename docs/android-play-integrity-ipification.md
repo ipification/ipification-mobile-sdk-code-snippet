@@ -7,7 +7,7 @@ For every new IPification attempt:
 1. Request a fresh Play Integrity token.
 2. Send it to the Client Backend.
 3. If the integrity check passes, receive a short-lived signed `state`.
-4. Immediately start IPification with that `state`.
+4. Pass that `state` to the IPification SDK using `setState()`, then immediately start authentication.
 5. Send the returned `code` and `state` to the Client Backend for completion.
 
 The Play Integrity token and signed `state` must not be reused for another attempt.
@@ -33,9 +33,11 @@ sequenceDiagram
 
     alt Integrity accepted
         Backend-->>App: Short-lived signed state
-        App->>IP: Immediately start IPification over cellular
+        Note right of App: start IPification with signed state
+        App->>IP: Immediately start IPification over cellular with signed state
         IP-->>App: code + state
         App->>Backend: Complete with code + state
+        Note right of App: VALIDATE STATE AND TRANSACTION
         Backend->>Backend: VALIDATE STATE AND TRANSACTION
         Backend->>IP: Exchange code
         IP-->>Backend: Authentication result
@@ -91,7 +93,7 @@ Example success response:
 }
 ```
 
-The app must immediately start the IPification flow using the returned `state`. If the state expires, start again with a new attempt and a new integrity token.
+The app must pass the returned `state` to the IPification SDK using `setState()`, then immediately start authentication. If the state expires, start again with a new attempt and a new integrity token.
 
 ## 3. Complete Verification and Exchange the IPification Code
 
