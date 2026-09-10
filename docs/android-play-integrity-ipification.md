@@ -4,10 +4,10 @@ Use Google Play Integrity to check the Android app and device before starting an
 
 For every new IPification attempt:
 
-1. Request a fresh Play Integrity token.
-2. Send it to the Client Backend.
-3. If the integrity check passes, receive a short-lived signed `state`.
-4. Pass that `state` to the IPification SDK using `setState()`, then immediately start authentication.
+1. Get an `attemptId` and `requestHash` from the Client Backend.
+2. Request a fresh Play Integrity token using that `requestHash`.
+3. Send the token to the Client Backend.
+4. If integrity passes, immediately start IPification with the returned signed `state`.
 5. Send the returned `code` and `state` to the Client Backend for completion.
 
 The Play Integrity token and signed `state` must not be reused for another attempt.
@@ -22,8 +22,8 @@ sequenceDiagram
     participant IP as IPification
 
     App->>Backend: Create attempt for IPIFICATION_AUTH
-    Backend-->>App: attemptId + challenge
-    App->>Google: Request integrityToken for this attempt
+    Backend-->>App: attemptId + requestHash
+    App->>Google: Request integrityToken using requestHash
     Google-->>App: integrityToken
 
     App->>Backend: Verify integrityToken
@@ -37,8 +37,7 @@ sequenceDiagram
         App->>IP: Immediately start IPification over cellular with signed state
         IP-->>App: code + state
         App->>Backend: Complete with code + state
-        Note right of App: VALIDATE STATE AND TRANSACTION
-        Backend->>Backend: VALIDATE STATE AND TRANSACTION
+        Note right of Backend: VALIDATE STATE AND TRANSACTION
         Backend->>IP: Exchange code
         IP-->>Backend: Authentication result
         Backend-->>App: ALLOW / REVIEW / DENY
@@ -60,28 +59,18 @@ The backend returns a short-lived attempt:
 ```json
 {
   "attemptId": "<attempt-id>",
-  "challenge": "<random-challenge>"
+  "requestHash": "<backend-generated-request-hash>",
+  "expiresAt": "<UTC-expiry-time>"
 }
 ```
 
-Create a hash bound to the attempt:
+The backend generates `requestHash` using 32 cryptographically secure random bytes:
 
 ```text
-requestHash = SHA-256(action + attemptId + challenge + operationData)
+requestHash = Base64URL_NoPadding(SecureRandom(32 bytes))
 ```
 
-- `action`: protected action, for example `IPIFICATION_AUTH`.
-- `operationData`: data bound to this action, for example the phone number being verified.
-
-Example input:
-
-```json
-["IPIFICATION_AUTH","<attemptId>","<challenge>","<phoneNumber>"]
-```
-
-`attemptId` and `challenge` come from the backend response. The app and backend must use the same fixed field order and encoding when calculating the hash.
-
-Request a fresh Play Integrity token:
+The app uses the returned value directly when requesting a fresh Play Integrity token:
 
 ```kotlin
 integrityTokenProvider.request(
@@ -91,7 +80,7 @@ integrityTokenProvider.request(
 )
 ```
 
-The backend stores the same attempt data to verify `requestHash`. Do not reuse the attempt or token. See Google's [Standard API guide](https://developer.android.com/google/play/integrity/standard).
+The backend stores `requestHash` with the attempt, action, session, and expiry. Do not reuse the attempt or token. See Google's [Standard API guide](https://developer.android.com/google/play/integrity/standard).
 
 ## 2. Verify integrity and request signed state
 
@@ -112,7 +101,8 @@ The backend must:
 - Confirm that the attempt belongs to the current session and has not expired.
 - Confirm that `action` matches the action stored for the attempt.
 - Decode the token through Google Play Integrity.
-- Validate the package name, `requestHash`, timestamp, app verdict, and device verdict.
+- Confirm that the decoded `requestHash` matches the value stored for the attempt.
+- Validate the package name, timestamp, app verdict, and device verdict.
 - Create a single-use verification transaction.
 - Generate a short-lived signed `state` only when the integrity policy passes.
 
