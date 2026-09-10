@@ -100,7 +100,7 @@ The app must pass the returned `state` to the IPification SDK using `setState()`
 IPification returns the authorization `code` and the same `state`. The app sends both to its backend in the original session:
 
 ```http
-POST /verification/complete
+POST /ipification/token-exchange
 Content-Type: application/json
 
 {
