@@ -70,6 +70,17 @@ Create a hash bound to the attempt:
 requestHash = SHA-256(action + attemptId + challenge + operationData)
 ```
 
+- `action`: protected action, for example `IPIFICATION_AUTH`.
+- `operationData`: data bound to this action, for example the phone number being verified.
+
+Example input:
+
+```json
+["IPIFICATION_AUTH","<attemptId>","<challenge>","<phoneNumber>"]
+```
+
+`attemptId` and `challenge` come from the backend response. The app and backend must use the same fixed field order and encoding when calculating the hash.
+
 Request a fresh Play Integrity token:
 
 ```kotlin
