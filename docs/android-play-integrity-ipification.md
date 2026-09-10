@@ -49,17 +49,38 @@ sequenceDiagram
 
 ## 1. Prepare Play Integrity
 
-Prepare the Standard Integrity token provider when the app starts. Keep the provider in memory and reuse it while valid.
+Prepare and reuse the Standard Integrity token provider. When the user starts IPification:
 
-When the user is ready to start IPification, request a fresh integrity token. Bind it to the current attempt using `requestHash`.
+```http
+POST /security/integrity/attempt?action=IPIFICATION_AUTH
+```
+
+The backend returns a short-lived attempt:
+
+```json
+{
+  "attemptId": "<attempt-id>",
+  "challenge": "<random-challenge>"
+}
+```
+
+Create a hash bound to the attempt:
 
 ```text
-requestHash = SHA-256(
-  action + attemptId + challenge + relevant operation data
+requestHash = SHA-256(action + attemptId + challenge + operationData)
+```
+
+Request a fresh Play Integrity token:
+
+```kotlin
+integrityTokenProvider.request(
+  StandardIntegrityTokenRequest.builder()
+    .setRequestHash(requestHash)
+    .build()
 )
 ```
 
-See Google's [Standard API guide](https://developer.android.com/google/play/integrity/standard) for the Android implementation.
+The backend stores the same attempt data to verify `requestHash`. Do not reuse the attempt or token. See Google's [Standard API guide](https://developer.android.com/google/play/integrity/standard).
 
 ## 2. Verify integrity and request signed state
 
